@@ -1,4 +1,4 @@
-(defproject ring-tutorial "0.1.0-SNAPSHOT"
+(defproject http-delayed-job "0.1.0-SNAPSHOT"
   :description "An Ring tutorial project"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
@@ -11,4 +11,6 @@
                  [clj-time "0.5.1"]
                  [clj-http "0.7.4"]]
   :plugins [[lein-ring "0.8.3"]]
-  :ring {:handler ring-tutorial.core/app})
+  :profiles {:test {:resource-paths ["resource-test"]}
+             :prod {:resource-paths ["resource-prod"]}}
+  :ring {:handler http-delayed-job.core/app})
