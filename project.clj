@@ -12,5 +12,6 @@
                  [clj-http "0.7.4"]]
   :plugins [[lein-ring "0.8.3"]]
   :profiles {:test {:resource-paths ["resource-test"]}
+             :dev {:resource-paths ["resource-test"]}
              :prod {:resource-paths ["resource-prod"]}}
   :ring {:handler http-delayed-job.core/app})

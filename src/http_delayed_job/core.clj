@@ -4,12 +4,15 @@
             [monger.collection :as mc]
             monger.joda-time
             [clj-time.core :as ct]
-            [clj-http.client :as http])
+            [clj-http.client :as http]
+            [clojure.java.io :as io])
   (:use ring.middleware.params
         ring.middleware.multipart-params)
   (:import [com.mongodb MongoOptions ServerAddress DB WriteConcern]
            [org.bson.types ObjectId]
            [java.net URI]))
+
+(def config (delay (io/load-file (io/.getFile (resource "config.clj"))))
 
 (mg/connect!)
 (mg/set-db! (mg/get-db "monger_test"))
@@ -20,12 +23,6 @@
   {:status 200
    :headers {"Content-Type" "text/html"}
    :body "Hello World from Ring"})
-
-(defn slurp-binary [^java.io.InputStream is len]
-  (with-open [rdr is]
-    (let [buf (byte-array len)]
-      (.read rdr buf)
-      buf)))
 
 (defn proxy-request [request-id]
   (println "Querying request..")
