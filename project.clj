@@ -6,7 +6,7 @@
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [ring/ring-core "1.1.8"]
                  [ring/ring-jetty-adapter "1.1.8"]
-                 [com.novemberain/monger "1.5.0"]
+                 [com.novemberain/monger "1.6.0"]
                  [cheshire "5.1.1"]
                  [clj-time "0.5.1"]
                  [clj-http "0.7.4"]]
