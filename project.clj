@@ -9,7 +9,8 @@
                  [com.novemberain/monger "1.6.0"]
                  [cheshire "5.1.1"]
                  [clj-time "0.5.1"]
-                 [clj-http "0.7.4"]]
+                 [clj-http "0.7.4"]
+                 [org.clojure/data.json "0.2.2"]]
   :plugins [[lein-ring "0.8.3"]]
   :profiles {:test {:resource-paths ["resource-test"]}
              :dev {:resource-paths ["resource-test"]}

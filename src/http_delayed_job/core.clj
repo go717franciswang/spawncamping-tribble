@@ -2,7 +2,8 @@
   (:require [clojure.pprint :as pp]
             [http-delayed-job.load-config :refer :all]
             [http-delayed-job.db :as db]
-            [clj-http.client :as client])
+            [clj-http.client :as client]
+            [clojure.data.json :as json])
   (:use ring.middleware.params
         ring.middleware.multipart-params
         [clojure.java.io :only [output-stream]]))
@@ -11,8 +12,7 @@
 
 (defn handler [req]
   {:status 200
-   :headers {"Content-Type" "application/json"}
-   :body "Hello World from Ring"})
+   :headers {"Content-Type" "application/json"}})
 
 (defn download-as-csv [request]
   (let [method (keyword (:method request))
@@ -47,9 +47,11 @@
     (println "Incoming Request:")
     (pp/pprint request)
     (let [request-id (db/store request)
-          request-id (agent request-id)]
-      (send request-id proxy-request))
-    (let [response (handler request)]
+          request-id-agent (agent request-id)
+          body (json/write-str [["status" "request-id" "ftp-dir"] 
+                                ["scheduled" (str request-id) (:ftp-dir-path (get-config))]])
+          response (assoc (handler request) :body body)]
+      (send request-id-agent proxy-request)
       (println "Outgoing Response Map:")
       (pp/pprint response)
       (println "------------------------")
