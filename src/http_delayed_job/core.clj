@@ -23,6 +23,8 @@
         args {:method method
               :url url
               :body body
+              :socket-timeout 21600000
+              :conn-timeout 21600000
               :as :byte-array}
         resp (client/request args)]
     (if (= 200 (:status resp))

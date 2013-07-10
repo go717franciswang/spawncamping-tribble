@@ -13,7 +13,11 @@
                   :headers {:z "123"}
                   :body nil})
 
-(mc/remove "requests")
+(defn clean-up-requests [f]
+  (mc/remove "requests")
+  (f))
+
+(use-fixtures :each clean-up-requests)
 
 (deftest loading-db-name
   (is (= "delayed_job_test" (:database (get-config)))))

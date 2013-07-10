@@ -4,12 +4,14 @@
             [http-delayed-job.core :refer :all]
             clojure.java.io))
 
-(defn clean-up-tmp-dir []
+(defn clean-up-tmp-dir [f]
   (let [ftp-dir (clojure.java.io/file (:ftp-dir (get-config)))
         files (rest (file-seq ftp-dir))]
     (doseq [file files]
-      (clojure.java.io/delete-file file))))
-(clean-up-tmp-dir)
+      (clojure.java.io/delete-file file)))
+  (f))
+
+(use-fixtures :each clean-up-tmp-dir)
 
 (deftest respond-json-ok
   (let [resp (app {})]
