@@ -1,5 +1,6 @@
 (ns http-delayed-job.db-test
   (:require [clojure.test :refer :all]
+            [http-delayed-job.load-config :refer :all]
             [http-delayed-job.db :refer :all]
             [clojure.pprint :as pp]
             [monger.collection :as mc]))

@@ -1,77 +1,54 @@
 (ns http-delayed-job.core
   (:require [clojure.pprint :as pp]
-            [monger.core :as mg]
-            [monger.collection :as mc]
-            monger.joda-time
-            [clj-time.core :as ct]
-            [clj-http.client :as http]
-            [clojure.java.io :as io])
+            [http-delayed-job.load-config :refer :all]
+            [http-delayed-job.db :as db]
+            [clj-http.client :as client])
   (:use ring.middleware.params
-        ring.middleware.multipart-params)
-  (:import [com.mongodb MongoOptions ServerAddress DB WriteConcern]
-           [org.bson.types ObjectId]
-           [java.net URI]))
+        ring.middleware.multipart-params
+        [clojure.java.io :only [output-stream]]))
 
-(def config (delay (io/load-file (io/.getFile (resource "config.clj"))))
-
-(mg/connect!)
-(mg/set-db! (mg/get-db "monger_test"))
-
-(def proxy-to-host "http://ubuntuserver")
+(def proxy-to-host "http://127.0.0.1")
 
 (defn handler [req]
   {:status 200
-   :headers {"Content-Type" "text/html"}
+   :headers {"Content-Type" "application/json"}
    :body "Hello World from Ring"})
 
-(defn proxy-request [request-id]
-  (println "Querying request..")
-  (let [request (mc/find-by-id "requests" {:_id request-id})
-        query-string (:query-string request)
-        url (str (:server-name request) (:uri request)
-                 (when query-string (str "?" query-string))) ]
-    (println "Sending request..")
-    (mc/update "requests"
-               {:_id request-id
-                :status "running"
-                :updated (ct/now)})
-    (let [http-req {:method (:method request)
-                   :url url
-                   :headers (:headers request)
-                   :body (:body-bytes request)
-                   :follow-redirects true
-                   :throw-exceptions false
-                   :as :stream}]
-      (pp/pprint http-req)
-      (let [response (http/request http-req)]
-        (println "Got response: ")
-        (pp/pprint response)))))
+(defn download-as-csv [request]
+  (let [method (keyword (:method request))
+        query (:query-string request)
+        url-prefix (str proxy-to-host (:uri request))
+        url (if query (str url-prefix "?" query) url-prefix)
+        body (:body-bytes request)
+        args {:method method
+              :url url
+              :body body
+              :as :byte-array}
+        resp (client/request args)]
+    (if (= 200 (:status resp))
+      (let [ftp-dir (:ftp-dir (get-config))
+            filename (str (java.util.UUID/randomUUID) ".csv")
+            filepath (str ftp-dir "/" filename)]
+        (with-open [o (output-stream filepath)]
+          (.write o (:body resp)))
+        filename)
+      nil)))
 
-(defn store-request [request]
-  (let [request-id (ObjectId.)]
-    (mc/insert "requests"
-            {:_id request-id
-             :remote-addr (:remote-addr request)
-             :method (:request-method request)
-             :query-string (:query-string request)
-             :uri (:uri request)
-             :server-name (:server-name request)
-             :headers (dissoc (:headers request) "host" "content-length")
-             :body-bytes (if-let [len (get-in request [:headers "content-length"])]
-                           (slurp-binary (:body request) (Integer/parseInt len)))
-             :created (ct/now)
-             :updated (ct/now)
-             :status "scheduled"}
-               WriteConcern/JOURNAL_SAFE)
-    (def request-id (agent 0))
-    (send request-id proxy-request)))
+(defn proxy-request [request-id]
+  (db/update request-id {:status "running"})
+  (let [request (db/retrieve request-id)
+        filename (download-as-csv request)
+        ftp-path (str (:ftp-dir-path (get-config)) "/" filename)]
+    (db/update request-id {:status "completed" :ftp-path ftp-path})))
 
 (defn wrap-spy [handler]
   (fn [request]
     (println "------------------------")
     (println "Incoming Request:")
     (pp/pprint request)
-    (store-request request)
+    (let [request-id (db/store request)
+          request-id (agent request-id)]
+      (send request-id proxy-request))
     (let [response (handler request)]
       (println "Outgoing Response Map:")
       (pp/pprint response)

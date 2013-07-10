@@ -2,14 +2,11 @@
   (:require [monger.core :as mg]
             [monger.collection :as mc]
             monger.joda-time
+            [http-delayed-job.load-config :refer :all]
             [clj-time.core :as ct]
             [clojure.pprint :as pp])
-  (:require [clojure.java.io :as io])
   (:import [org.bson.types ObjectId]
            [com.mongodb MongoOptions ServerAddress DB WriteConcern]))
-
-(def config (delay (load-file (io/.getFile (io/resource "config.clj")))))
-(defn get-config [] @(force config))
 
 (mg/connect!)
 (mg/set-db! (mg/get-db (:database (get-config))))
