@@ -3,7 +3,8 @@
             [http-delayed-job.load-config :refer :all]
             [http-delayed-job.db :refer :all]
             [clojure.pprint :as pp]
-            [monger.collection :as mc]))
+            [monger.collection :as mc])
+  (:use [clj-time.coerce :only [to-long]]))
 
 (def test-request {:remote-addr "192.0.0.1"
                   :request-method "post"
@@ -42,4 +43,12 @@
       (is (= "192.0.0.1" (:remote-addr request)))
       (is (= "running" (:status request))))))
 
+(deftest retrieve-recent-requests
+  (dotimes [_ 5] (store test-request))
+  (let [requests (retrieve-recent 3)
+        top-req (first requests)
+        bottom-req (last requests)]
+    (is (= (count requests) 3))
+    (is (> (to-long (:created top-req)) 
+           (to-long (:created bottom-req))))))
         

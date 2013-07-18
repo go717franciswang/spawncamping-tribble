@@ -1,6 +1,7 @@
 (ns http-delayed-job.db
   (:require [monger.core :as mg]
             [monger.collection :as mc]
+            [monger.query :as mq]
             monger.joda-time
             [http-delayed-job.load-config :refer :all]
             [clj-time.core :as ct]
@@ -37,6 +38,13 @@
 
 (defn retrieve [request-id]
   (mc/find-one-as-map "requests" {:_id request-id}))
+
+(defn retrieve-recent [n]
+  (mq/with-collection "requests"
+    (mq/find {})
+    (mq/fields [:_id :created :updated :status :uri :query-string :ftp-path])
+    (mq/sort {:created -1})
+    (mq/limit n)))
 
 (defn update [request-id changes]
   (let [changes (assoc changes :updated (ct/now))]
