@@ -44,12 +44,12 @@
         ftp-path (str (:ftp-dir-path (get-config)) "/" filename)]
     (db/update request-id {:status "completed" :ftp-path ftp-path})))
 
-(def ymd (tf/formatters :year-month-day))
+(def ymdm (tf/formatters :date-hour-minute))
 
 (defn req2vec [request]
   [(str (:_id request))
-   (tf/unparse ymd (:created request))
-   (tf/unparse ymd (:updated request))
+   (tf/unparse ymdm (:created request))
+   (tf/unparse ymdm (:updated request))
    (:status request)
    (:ftp-path request)
    (:uri request)
