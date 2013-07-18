@@ -27,7 +27,8 @@
 
 (deftest respond-json-recent-requests
   (let [resp (app {:uri "/requests"})
-        part-resp (json/write-str ["request-id" "created" "updated" "status" "ftp-path" "uri" "query-string"])]
+        part-resp (json/write-str ["request-id" "created" "updated" "email-to" 
+                                   "status" "ftp-path" "uri" "query-string"])]
     (is (substring? part-resp (:body resp)))))
 
 (deftest respond-json-ok

@@ -30,6 +30,7 @@
                 :headers (dissoc (:headers request) "host" "content-length")
                 :body-bytes (if-let [len (get-in request [:headers "content-length"])]
                               (slurp-binary (:body request) (Integer/parseInt len)))
+                :email-to (get-in request [:cookies "email" :value])
                 :created (ct/now)
                 :updated (ct/now)
                 :status "scheduled"}
@@ -42,7 +43,7 @@
 (defn retrieve-recent [n]
   (mq/with-collection "requests"
     (mq/find {})
-    (mq/fields [:_id :created :updated :status :uri :query-string :ftp-path])
+    (mq/fields [:_id :created :updated :email-to :status :uri :query-string :ftp-path])
     (mq/sort {:created -1})
     (mq/limit n)))
 

@@ -2,9 +2,11 @@
   (:require [clojure.pprint :as pp]
             [http-delayed-job.load-config :refer :all]
             [http-delayed-job.db :as db]
+            [http-delayed-job.mail :as mail]
             [clj-http.client :as client]
             [clj-time.format :as tf]
-            [clojure.data.json :as json])
+            [clojure.data.json :as json]
+            [ring.middleware.cookies :as cookie])
   (:use ring.middleware.params
         ring.middleware.multipart-params
         [clojure.java.io :only [output-stream]]))
@@ -42,7 +44,11 @@
   (let [request (db/retrieve request-id)
         filename (download-as-csv request)
         ftp-path (str (:ftp-dir-path (get-config)) "/" filename)]
-    (db/update request-id {:status "completed" :ftp-path ftp-path})))
+    (db/update request-id {:status "completed" :ftp-path ftp-path})
+    (when (boolean (:email-to request))
+      (let [request (db/retrieve request-id)
+            email (:email-to request)]
+        (mail/send-mail email request)))))
 
 (def ymdm (tf/formatters :date-hour-minute))
 
@@ -50,6 +56,7 @@
   [(str (:_id request))
    (tf/unparse ymdm (:created request))
    (tf/unparse ymdm (:updated request))
+   (:email-to request)
    (:status request)
    (:ftp-path request)
    (:uri request)
@@ -58,7 +65,7 @@
 (defn list-requests []
   (let [limit 20
         requests (map req2vec (db/retrieve-recent limit))
-        headers ["request-id" "created" "updated" "status" "ftp-path" "uri" "query-string"]
+        headers ["request-id" "created" "updated" "email-to" "status" "ftp-path" "uri" "query-string"]
         body (json/write-str (cons headers requests))]
   body))
 
@@ -86,4 +93,5 @@
 
 (def app
   (-> handler
-    wrap-spy))
+    wrap-spy
+    cookie/wrap-cookies))
