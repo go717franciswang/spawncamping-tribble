@@ -37,8 +37,9 @@
                WriteConcern/JOURNAL_SAFE)
     request-id))
 
-(defn retrieve [request-id]
-  (mc/find-one-as-map "requests" {:_id request-id}))
+(defn retrieve 
+  ([request-id] (mc/find-one-as-map "requests" {:_id request-id}))
+  ([request-id fields] (mc/find-one-as-map "requests" {:_id request-id} fields)))
 
 (defn retrieve-recent [n]
   (mq/with-collection "requests"
