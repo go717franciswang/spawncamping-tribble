@@ -41,15 +41,18 @@
 
 (defn proxy-request [request-id]
   (db/update request-id {:status "running"})
-  (let [request (db/retrieve request-id)
-        filename (download-as-csv request)
-        ftp-path (str (:ftp-dir-path (get-config)) "/" filename)]
-    (db/update request-id {:status "completed" :ftp-path ftp-path})
-    (when (boolean (:email-to request))
-      (let [request (db/retrieve request-id [:_id :created :updated :status 
-                                             :ftp-path :uri :query-string :email-to])
-            email (:email-to request)]
-        (mail/send-mail email request)))))
+  (try
+    (let [request (db/retrieve request-id)
+          filename (download-as-csv request)
+          ftp-path (str (:ftp-dir-path (get-config)) "/" filename)]
+      (db/update request-id {:status "completed" :ftp-path ftp-path})
+      (when (boolean (:email-to request))
+        (let [request (db/retrieve request-id [:_id :created :updated :status 
+                                               :ftp-path :uri :query-string :email-to])
+              email (:email-to request)]
+          (mail/send-mail email request))))
+    (catch Exception e
+      (db/update request-id {:status "failed"}))))
 
 (def ymdm (tf/formatters :date-hour-minute))
 
