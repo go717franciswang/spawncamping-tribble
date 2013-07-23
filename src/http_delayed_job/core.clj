@@ -52,7 +52,7 @@
               email (:email-to request)]
           (mail/send-mail email request))))
     (catch Exception e
-      (db/update request-id {:status "failed"}))))
+      (db/update request-id {:status "failed" :error-msg (.getMessage e)}))))
 
 (def ymdm (tf/formatters :date-hour-minute))
 
