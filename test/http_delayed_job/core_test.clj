@@ -15,9 +15,7 @@
 (use-fixtures :each clean-up-tmp-dir)
 
 (defn substring? [needle haystack]
-  (let [l (count needle)
-        r (range (inc (- (count haystack) l)))]
-    (boolean (some #(= % needle) (map #(subs haystack % (+ % l)) r)))))
+  (> (String/.indexOf haystack needle) -1))
 
 (deftest substring-exists
   (is (= true (substring? "ab" "abc")))
