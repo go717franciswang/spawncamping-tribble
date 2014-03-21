@@ -1,10 +1,15 @@
 # http-delayed-job
 
-A Clojure library designed to ... well, that part is up to you.
-
 ## Usage
+Start Mongodb in RHEL
+```
+mongod --dbpath /custom/path/to/data/dir
+```
 
-FIXME
+Start Delayed-job server
+```sh
+lein trampoline ring server-headless
+```
 
 ## License
 
