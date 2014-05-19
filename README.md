@@ -15,7 +15,7 @@ mount --bind ftp-dir /var/ftp/gri/path
 
 Start Delayed-job server
 ```sh
-lein trampoline ring server-headless
+lein with-profile prod trampoline ring server-headless
 ```
 
 ## License
