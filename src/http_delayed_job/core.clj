@@ -6,7 +6,9 @@
             [clj-http.client :as client]
             [clj-time.format :as tf]
             [clojure.data.json :as json]
-            [ring.middleware.cookies :as cookie])
+            [ring.middleware.cookies :as cookie]
+            [clojure.walk :as cwalk]
+            )
   (:use ring.middleware.params
         ring.middleware.multipart-params
         [clojure.java.io :only [output-stream]]))
@@ -23,12 +25,17 @@
         url-prefix (str proxy-to-host (:uri request))
         url (if query (str url-prefix "?" query) url-prefix)
         body (:body-bytes request)
+        new-headers (cwalk/stringify-keys (:headers request))
         args {:method method
               :url url
+              :headers new-headers
               :body body
               :socket-timeout 21600000
               :conn-timeout 21600000
               :as :byte-array}
+        _ (println "------------------------")
+        _ (println "Redirected request: ")
+        _ (pp/pprint args)
         resp (client/request args)]
     (if (= 200 (:status resp))
       (let [ftp-dir (:ftp-dir (get-config))
@@ -37,7 +44,11 @@
         (with-open [o (output-stream filepath)]
           (.write o (:body resp)))
         filename)
-      nil)))
+      (do
+        (println "------------------------")
+        (println "Request failed:")
+        (pp/pprint (:body resp))
+        nil))))
 
 (defn proxy-request [request-id]
   (db/update request-id {:status "running"})
@@ -52,6 +63,9 @@
               email (:email-to request)]
           (mail/send-mail email request))))
     (catch Exception e
+      (println "------------------------")
+      (println "Caught exception:")
+      (pp/pprint e)
       (db/update request-id {:status "failed" :error-msg (.getMessage e)}))))
 
 (def ymdm (tf/formatters :date-hour-minute))
