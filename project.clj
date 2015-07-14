@@ -16,4 +16,5 @@
   :profiles {:test {:resource-paths ["resource-test"]}
              :dev {:resource-paths ["resource-test"]}
              :prod {:resource-paths ["resource-prod"]}}
+  :jvm-opts ["-Xmx500m"]
   :ring {:handler http-delayed-job.core/app})
