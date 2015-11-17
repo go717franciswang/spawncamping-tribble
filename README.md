@@ -9,6 +9,7 @@ mongod --dbpath /custom/path/to/data/dir
 Configure FTP server
 * Edit resource-test|prod/config.clj
 * Mount ftp-dir to ftp-dir-path
+* Add `anon_root=/path/to/ftp` /etc/vsftpd/vsftpd.conf
 ```
 mount --bind ftp-dir /var/ftp/gri/path
 ```
